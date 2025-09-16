@@ -1,0 +1,156 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model bestsellermenu {
+  id           Int        @id @default(autoincrement())
+  restaurantId Int
+  menuId       Int
+  createdAt    DateTime   @default(now())
+  menu         menu       @relation(fields: [menuId], references: [id], map: "BestSellerMenu_menuId_fkey")
+  restaurant   restaurant @relation(fields: [restaurantId], references: [id], map: "BestSellerMenu_restaurantId_fkey")
+
+  @@index([menuId], map: "BestSellerMenu_menuId_fkey")
+  @@index([restaurantId], map: "BestSellerMenu_restaurantId_fkey")
+}
+
+model cart {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  menuId    Int
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+  menu      menu     @relation(fields: [menuId], references: [id], map: "Cart_menuId_fkey")
+  user      user     @relation(fields: [userId], references: [id], map: "Cart_userId_fkey")
+
+  @@index([menuId], map: "Cart_menuId_fkey")
+  @@index([userId], map: "Cart_userId_fkey")
+}
+
+model category {
+  id   Int    @id @default(autoincrement())
+  name String @unique(map: "Category_name_key")
+  menu menu[]
+}
+
+model healthcondition {
+  id   Int    @id @default(autoincrement())
+  name String @unique(map: "HealthCondition_name_key")
+  menu menu[] @relation("healthconditiontomenu")
+  user user[] @relation("healthconditiontouser")
+}
+
+model menu {
+  id              Int               @id @default(autoincrement())
+  name            String
+  description     String?
+  price           Float
+  restaurantId    Int
+  categoryId      Int
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime
+  image           String?
+  bestsellermenu  bestsellermenu[]
+  cart            cart[]
+  category        category          @relation(fields: [categoryId], references: [id], map: "Menu_categoryId_fkey")
+  restaurant      restaurant        @relation(fields: [restaurantId], references: [id], map: "Menu_restaurantId_fkey")
+  nutrition       nutrition?
+  orderitem       orderitem[]
+  recommendedmenu recommendedmenu[]
+  healthcondition healthcondition[] @relation("healthconditiontomenu")
+
+  @@index([categoryId], map: "Menu_categoryId_fkey")
+  @@index([restaurantId], map: "Menu_restaurantId_fkey")
+}
+
+model nutrition {
+  id          Int      @id @default(autoincrement())
+  calories    Float
+  carbs       Float
+  protein     Float
+  fat         Float
+  fiber       Float
+  sugar       Float
+  sodium      Float
+  cholesterol Float
+  menuId      Int      @unique(map: "Nutrition_menuId_key")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+  menu        menu     @relation(fields: [menuId], references: [id], map: "Nutrition_menuId_fkey")
+}
+
+model order {
+  id         Int         @id @default(autoincrement())
+  userId     Int
+  totalPrice Float
+  status     String      @default("pending")
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime
+  user       user        @relation(fields: [userId], references: [id], map: "Order_userId_fkey")
+  orderitem  orderitem[]
+
+  @@index([userId], map: "Order_userId_fkey")
+}
+
+model orderitem {
+  id        Int      @id @default(autoincrement())
+  orderId   Int
+  menuId    Int
+  quantity  Int
+  price     Float
+  createdAt DateTime @default(now())
+  menu      menu     @relation(fields: [menuId], references: [id], map: "OrderItem_menuId_fkey")
+  order     order    @relation(fields: [orderId], references: [id], map: "OrderItem_orderId_fkey")
+
+  @@index([menuId], map: "OrderItem_menuId_fkey")
+  @@index([orderId], map: "OrderItem_orderId_fkey")
+}
+
+model recommendedmenu {
+  id           Int        @id @default(autoincrement())
+  restaurantId Int
+  menuId       Int
+  createdAt    DateTime   @default(now())
+  menu         menu       @relation(fields: [menuId], references: [id], map: "RecommendedMenu_menuId_fkey")
+  restaurant   restaurant @relation(fields: [restaurantId], references: [id], map: "RecommendedMenu_restaurantId_fkey")
+
+  @@index([menuId], map: "RecommendedMenu_menuId_fkey")
+  @@index([restaurantId], map: "RecommendedMenu_restaurantId_fkey")
+}
+
+model restaurant {
+  id              Int               @id @default(autoincrement())
+  name            String
+  description     String?
+  address         String
+  phone           String?
+  website         String            @db.VarChar(1000)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime
+  bestsellermenu  bestsellermenu[]
+  menu            menu[]
+  recommendedmenu recommendedmenu[]
+}
+
+model user {
+  id              Int               @id @default(autoincrement())
+  email           String            @unique(map: "User_email_key")
+  password        String
+  name            String?
+  picture         String?
+  role            String            @default("user")
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime
+  age             Int?
+  gender          String?
+  height          Float?
+  weight          Float?
+  cart            cart[]
+  order           order[]
+  healthcondition healthcondition[] @relation("healthconditiontouser")
+}
